@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
 
-from scrapy_bid.items import ScrapyBidItem
-
 
 class ZukermanSpider(scrapy.Spider):
     name = 'zukerman'

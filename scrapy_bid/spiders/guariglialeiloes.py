@@ -1,26 +1,52 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import validators
+import time
+import os
+
 
 
 class GuariglialeiloesSpider(scrapy.Spider):
     name = 'guariglialeiloes'
     allowed_domains = ['guariglialeiloes.com.br']
-    start_urls = ['https://www.guariglialeiloes.com.br/']
+
+
+    def start_requests(self):
+        urls = ['https://www.guariglialeiloes.com.br/']
+        if os.path.isfile("bets.txt") == False:
+            with open('bets.txt', 'w') as f:
+                f.write("DATA / ID , HORA , LEILAO , LOTE , DESCRICAO , VALOR")
+        with open('bets.txt', 'r') as f:
+            today = time.strftime("%d/%m/%Y")
+            print("Today = " + today)
+            flag = False
+            for line in f:
+                print("line = " + line)
+                if today in line:
+                    flag = True
+            with open('bets.txt', 'a+') as f:
+                if flag == False:
+                    if os.path.getsize('bets.txt') > 0:
+                        f.write("\n\n")
+                f.write(time.strftime("%d/%m/%Y") + "\n")
+        for url in urls:
+            yield scrapy.Request(url=url, callback=self.parse)
+
 
     def parse(self, response):
         catalogs = response.xpath(
-            '//div[contains(@class,"infinitescroll")]'
+            '//div[contains(@class,"card-body")]'
         )
 
         for catalog in catalogs:
             url = catalog.xpath(
-                "./div/div/div/div//a/@href"
+                 ".//a/@href"
             ).extract_first()
             self.log(catalog)
-            self.logger.info(url);
 
-            yield scrapy.Request(url=url, callback=self.parse_item)
+            if validators.url(url):
+                self.logger.info(url);
+                yield scrapy.Request(url=url, callback=self.parse_item)
 
     def parse_item(self, response):
         items = response.xpath(
@@ -34,34 +60,45 @@ class GuariglialeiloesSpider(scrapy.Spider):
             self.log(item)
 
             if validators.url(url):
-                self.logger.info(url);
-
-          #  yield scrapy.Request(url=url, callback=self.parse_detail)
+                #self.logger.info(url);
+                yield scrapy.Request(url=url, callback=self.parse_detail)
 
         next_page = response.xpath(
-            '//ul[contains(@class,"pagination")]/div[2]/@href'
+            '//ul[contains(@class,"pagination")]/li[7]//a/@href'
         ).extract_first()
 
-        self.logger.info('next_page: {0}'.format(next_page))
+        self.logger.info(next_page);
 
         if next_page:
+            self.logger.info(next_page);
             self.log('Next Page: {0}'.format(next_page))
-            yield scrapy.Request(url=next_page, callback=self.parse)
+            yield scrapy.Request(url=next_page, callback=self.parse_item)
 
     def parse_detail(self, response):
-        title   = response.xpath('//div[contains(@class,"px-1")]//h4/text()').extract()
+        leil = Leilao()
+        leil['link'] = link = response.url
+        leil['title'] = title = response.xpath('//div[contains(@class,"px-1")]//h4/text()').extract()
+        leil['view'] = view = response.xpath('//div[contains(@class,"detalhes-lote")]/div/div[3]/div/div[5]/span/text()').extract()
+        leil['valor'] = valor = response.xpath('//div[contains(@class,"detalhes-lote")]/div/div[3]/div/div/h3[1]/text()').extract()
+
      #   auction = response.xpath('//div[contains(@class,"text-center")]/span/i/text()').extract()
-        view    = response.xpath('//div[contains(@class,"text-center")]/span/i/text()').extract()
+
         self.logger.info(u'catalogo URL: {0}'.format(response.url))
-    #   self.logger.info(u'auction: {0}'.format(auction))
         self.logger.info('Título: {0}'.format(title))
         self.logger.info('Views: {0}'.format(view))
+        self.logger.info('valor: {0}'.format(valor))
+
+        return leil
 
 
-
-
-
-
+class Leilao(scrapy.Item):
+    link = scrapy.Field()
+    leilao = scrapy.Field()
+    lote = scrapy.Field()
+    title = scrapy.Field()
+    view = scrapy.Field()
+    valor = scrapy.Field()
+    last_updated = scrapy.Field(serializer=str)
 
 
 
