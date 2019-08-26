@@ -16,11 +16,44 @@ NEWSPIDER_MODULE = 'scrapy_bid.spiders'
 
 LOG_LEVEL = 'INFO'
 
+
+SPIDER_MIDDLEWARES = {
+    'scrapy_magicfields.MagicFieldsMiddleware': 100,
+}
+
+MAGIC_FIELDS = {
+    'uid': "$response:url,r'id=(\d+)'",
+    'spider': '$spider:name',
+    'timestamp': "$time",
+}
+
+ITEM_PIPELINES = {
+   'scrapy_bid.pipelines.ScrapyBidPipeline': 300,
+   # 'myproject.pipelines.JsonWriterPipeline': 800 #another pipline
+}
+
+# ITEM_PIPELINES = {
+#     'scrapy_bid.scrapy_firebase.FirebasePipeline': 900
+# }
+
+# ITEM_PIPELINES = {'scrapy.pipelines.files.FilesPipeline': 1,
+#                   'scrapy_bid.pipelines.GCSFilePipeline': 1}
+
+# ITEM_PIPELINES = {'scrapy_bid.pipelines.GCSFilePipeline': 1}
+
+# ITEM_PIPELINES = {'scrapy_bid.jsonpipeline.JsonWriterPipeline': 900}
+
+
+
+
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'scrapy_bid (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+#ROBOTSTXT_OBEY = True
+
+
+
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32

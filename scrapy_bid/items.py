@@ -11,6 +11,14 @@ import scrapy
 class ScrapyBidItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
+
+    uid = Field()
+    spider = Field()
+    timestamp = Field()
+    content = Field()
+    image_urls = scrapy.Field()
+    images = scrapy.Field()
+
     pass
     #
     #

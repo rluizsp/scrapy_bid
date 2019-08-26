@@ -1,0 +1,8 @@
+scrapy
+validators==0.11.2
+pyasn1==0.4.1
+nose
+sphinx
+inquirer
+wheel
+twine

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import validators
-import time
-import os
+import re
 
 
 
@@ -10,28 +9,11 @@ class GuariglialeiloesSpider(scrapy.Spider):
     name = 'guariglialeiloes'
     allowed_domains = ['guariglialeiloes.com.br']
 
-
     def start_requests(self):
-        urls = ['https://www.guariglialeiloes.com.br/']
-        if os.path.isfile("bets.txt") == False:
-            with open('bets.txt', 'w') as f:
-                f.write("DATA / ID , HORA , LEILAO , LOTE , DESCRICAO , VALOR")
-        with open('bets.txt', 'r') as f:
-            today = time.strftime("%d/%m/%Y")
-            print("Today = " + today)
-            flag = False
-            for line in f:
-                print("line = " + line)
-                if today in line:
-                    flag = True
-            with open('bets.txt', 'a+') as f:
-                if flag == False:
-                    if os.path.getsize('bets.txt') > 0:
-                        f.write("\n\n")
-                f.write(time.strftime("%d/%m/%Y") + "\n")
+        urls = ['http://guariglialeiloes.com.br/']
+
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
-
 
     def parse(self, response):
         catalogs = response.xpath(
@@ -40,12 +22,12 @@ class GuariglialeiloesSpider(scrapy.Spider):
 
         for catalog in catalogs:
             url = catalog.xpath(
-                 ".//a/@href"
+                ".//a/@href"
             ).extract_first()
             self.log(catalog)
 
             if validators.url(url):
-                self.logger.info(url);
+                self.logger.info("catalog: "+url);
                 yield scrapy.Request(url=url, callback=self.parse_item)
 
     def parse_item(self, response):
@@ -55,55 +37,73 @@ class GuariglialeiloesSpider(scrapy.Spider):
 
         for item in items:
             url = item.xpath(
-                 ".//a/@href"
+                ".//a/@href"
             ).extract_first()
             self.log(item)
 
             if validators.url(url):
-                #self.logger.info(url);
+                # self.logger.info(url);
                 yield scrapy.Request(url=url, callback=self.parse_detail)
 
         next_page = response.xpath(
             '//ul[contains(@class,"pagination")]/li[7]//a/@href'
         ).extract_first()
 
-        self.logger.info(next_page);
+        # self.logger.info("next_page"next_page);
 
         if next_page:
-            self.logger.info(next_page);
+            self.logger.info("next_page: "+next_page);
             self.log('Next Page: {0}'.format(next_page))
             yield scrapy.Request(url=next_page, callback=self.parse_item)
 
     def parse_detail(self, response):
-        leil = Leilao()
-        leil['link'] = link = response.url
-        leil['title'] = title = response.xpath('//div[contains(@class,"px-1")]//h4/text()').extract()
-        leil['view'] = view = response.xpath('//div[contains(@class,"detalhes-lote")]/div/div[3]/div/div[5]/span/text()').extract()
-        leil['valor'] = valor = response.xpath('//div[contains(@class,"detalhes-lote")]/div/div[3]/div/div/h3[1]/text()').extract()
+        bid = Bid()
+        bid['item_url'] = response.url
+        bid['item_name'] = response.xpath('//div[contains(@class,"px-1")]//h4/text()').extract()
+        bid['item_view_count'] = response.xpath('//div[contains(@class,"detalhes-lote")]/div/div[3]/div/div[5]/span/text()').extract()
+        item_price = response.xpath('//div[contains(@class,"detalhes-lote")]/div/div[3]/div/div/h3[1]/text()').extract()
 
-     #   auction = response.xpath('//div[contains(@class,"text-center")]/span/i/text()').extract()
+        a = item_price.replace('R$','')
+        b = a.replace('.','')
+        c = b.replace(',','.')
 
-        self.logger.info(u'catalogo URL: {0}'.format(response.url))
-        self.logger.info('Título: {0}'.format(title))
-        self.logger.info('Views: {0}'.format(view))
-        self.logger.info('valor: {0}'.format(valor))
+
+        bid['item_price'] = c
+
+        # leil['leilao'] = time.strftime("%d/%m/%Y, %H:%M:%S")
+
+        bid['bid_name'] = 'guariglialeiloes'
+
+        alphabet = response.xpath('//div[contains(@class,"px-1")]//h4/text()').extract()
+
+        print(self.find_numbers(bid['item_price']))
+
+        data = alphabet[0].split("-")
+
+        print(bid['item_price'])
 
         return leil
 
 
-class Leilao(scrapy.Item):
-    link = scrapy.Field()
-    leilao = scrapy.Field()
-    lote = scrapy.Field()
-    title = scrapy.Field()
-    view = scrapy.Field()
-    valor = scrapy.Field()
-    last_updated = scrapy.Field(serializer=str)
+    def find_numbers(string, ints=True):
+        numexp = re.compile(r'[-]?\d[\d,]*[\.]?[\d{2}]*')  # optional - in front
+        numbers = numexp.findall(string)
+        numbers = [x.replace(',', '') for x in numbers]
+        if ints is True:
+            return [int(x.replace(',', '').split('.')[0]) for x in numbers]
+        else:
+            return numbers
 
-
-
-
-
-
+class Bid(scrapy.Item):
+    bid_name = scrapy.Field()
+    item_name = scrapy.Field()
+    item_price = scrapy.Field()
+    item_description = scrapy.Field()
+    ttimestamp = scrapy.Field()
+    item_model_desc = scrapy.Field()
+    item_model_year = scrapy.Field()
+    item_made_year = scrapy.Field()
+    item_url = scrapy.Field()
+    item_view_count = scrapy.Field()
 
 
