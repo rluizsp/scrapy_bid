@@ -21,7 +21,15 @@ class ScrapyBidPipeline(object):
         self.connection.close()
 
     def process_item(self, item, spider):
-        self.cur.execute("insert into bid_cars(item_name,item_description) values(%s,%s)", (item['title'], item['valor']))
+
+        # print(item)
+        self.cur.execute("insert into bid_cars(bid_name,item_name,item_price,item_description,item_url,item_model_year,"
+                         "item_made_year,item_model_desc, ttimestamp,item_color,item_fuel,item_km)"
+                         " values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                         (item['bid_name'],item['item_name'], item['item_price'], item['item_description'],
+                          item['item_url'],item['item_model_year'],item['item_made_year'], item['item_model_desc'],
+                          item['ttimestamp'], item['item_color'],  item['item_fuel'],item['item_km']))
+
         self.connection.commit()
         return item
 

@@ -16,6 +16,7 @@ NEWSPIDER_MODULE = 'scrapy_bid.spiders'
 
 LOG_LEVEL = 'INFO'
 
+DUPEFILTER_DEBUG = True
 
 SPIDER_MIDDLEWARES = {
     'scrapy_magicfields.MagicFieldsMiddleware': 100,
@@ -24,11 +25,11 @@ SPIDER_MIDDLEWARES = {
 MAGIC_FIELDS = {
     'uid': "$response:url,r'id=(\d+)'",
     'spider': '$spider:name',
-    'timestamp': "$time",
+    'ttimestamp': "$time",
 }
 
 ITEM_PIPELINES = {
-   'scrapy_bid.pipelines.ScrapyBidPipeline': 300,
+   'scrapy_bid.pipelines.ScrapyBidPipeline': 900,
    # 'myproject.pipelines.JsonWriterPipeline': 800 #another pipline
 }
 
@@ -48,6 +49,8 @@ ITEM_PIPELINES = {
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'scrapy_bid (+http://www.yourdomain.com)'
+
+USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36'
 
 # Obey robots.txt rules
 #ROBOTSTXT_OBEY = True
