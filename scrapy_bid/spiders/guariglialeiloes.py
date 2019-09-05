@@ -22,9 +22,7 @@ class GuariglialeiloesSpider(scrapy.Spider):
         )
 
         for catalog in catalogs:
-            url = catalog.xpath(
-                ".//a/@href"
-            ).extract_first()
+            url = catalog.xpath(".//a/@href").extract_first()
             self.log(catalog)
 
             if validators.url(url):
@@ -39,7 +37,8 @@ class GuariglialeiloesSpider(scrapy.Spider):
             url = item.xpath("./div/div[3]/div/a/@href").extract_first()
             bid = Bid()
             bid['item_description'] = item.xpath('normalize-space(//div[contains(@class,"body-lote")]/a/p/text()[2])').extract_first()
-            bid['bid_name'] = item.xpath('//div[contains(@class,"body-lote")]//a/div/img').extract_first()
+            # bid['bid_name'] = item.xpath('//div[contains(@class,"body-lote")]//a/div/img').extract_first()
+            bid['bid_name'] = response.url
             item_name = item.xpath('normalize-space(./div/div[2]/div/a/p/text()[2])').extract_first()
             bid['item_description'] = item.xpath('normalize-space(./div/div[2]/div/a/p/span/text())').extract_first()
             # # ttimestamp'] =
@@ -98,7 +97,15 @@ class GuariglialeiloesSpider(scrapy.Spider):
                 # self.logger.info(url);
                 # yield scrapy.Request(url=url, callback=self.parse_detail)
 
-        next_page = response.xpath('//div[@class="lista-lotes"]/div[2]/ul/li[6]/a/@href').extract_first()
+        arr_next_page = response.xpath('//div[@class="lista-lotes"]/div[2]/ul/li/a/@href').extract()
+
+        try:
+            next_page = str(arr_next_page[len(arr_next_page) - 1])
+            print(next_page)
+
+        except IndexError:
+            next_page = ""
+
 
         # self.logger.info("next_page",next_page)
 
